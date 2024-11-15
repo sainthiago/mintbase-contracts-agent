@@ -70,7 +70,7 @@ export async function GET() {
                       minters: {
                         type: "array",
                         items: {
-                          type: "string", 
+                          type: "string",
                         },
                       },
                     },
@@ -103,15 +103,6 @@ export async function GET() {
           description:
             "Transfer the ownership of a contract to a new owner. The connected wallet must be the current owner of the contract.",
           parameters: [
-            {
-              name: "accountId",
-              in: "path",
-              description: "ID of the account that is connected.",
-              required: true,
-              schema: {
-                type: "string",
-              },
-            },
             {
               name: "contractId",
               in: "path",

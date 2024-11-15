@@ -17,13 +17,11 @@ export async function GET(request: Request) {
       contractId
     );
 
-    console.log({ contractId, contractData });
-
-    const contractExists = contractData?.nft_contracts.length === 0;
-    if (!contractExists || contractError) {
-      return {
-        error: `Contract ${contractId} was not found.`,
-      };
+    if (!contractData?.nft_contracts?.length || contractError) {
+      return NextResponse.json(
+        { error: `Contract ${contractId} was not found.` },
+        { status: 404 }
+      );
     }
 
     const { data: mintersData, error: mintersError } = await contractMinters(
@@ -31,9 +29,10 @@ export async function GET(request: Request) {
     );
 
     if (!mintersData || mintersError) {
-      return {
-        error: `Minters for contract ${contractId} were not found`,
-      };
+      return NextResponse.json(
+        { error: `Minters for contract ${contractId} were not found` },
+        { status: 404 }
+      );
     }
 
     const contractInfo = {

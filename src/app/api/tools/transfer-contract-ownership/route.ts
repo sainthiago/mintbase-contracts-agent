@@ -1,12 +1,16 @@
 import { storeData } from "@mintbase-js/data";
 import { GAS, ONE_YOCTO } from "@mintbase-js/sdk";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   try {
+    const headersList = headers();
+    const mbMetadata = JSON.parse(headersList.get("mb-metadata") || "{}");
+    const accountId = mbMetadata?.accountData?.accountId || "near";
+
     const { searchParams } = new URL(request.url);
 
-    const accountId = searchParams.get("accountId");
     const contractId = searchParams.get("contractId");
     const newOwner = searchParams.get("newOwner");
 
@@ -23,21 +27,29 @@ export async function GET(request: Request) {
       contractId
     );
 
-    const contractExists = contractData?.nft_contracts.length === 0;
-    if (!contractExists || contractError) {
-      return {
-        error: `Contract ${contractId} was not found.`,
-      };
+    if (
+      contractError ||
+      !contractData ||
+      contractData.nft_contracts.length === 0
+    ) {
+      return NextResponse.json(
+        {
+          error: `Contract ${contractId} was not found.`,
+        },
+        { status: 404 }
+      );
     }
 
     if (contractData.nft_contracts[0].owner_id !== accountId) {
-      return {
-        error: `${accountId} is not the owner of the contract.`,
-      };
+      return NextResponse.json(
+        {
+          error: `${accountId} is not the owner of the contract.`,
+        },
+        { status: 403 }
+      );
     }
 
     const transactionPayload = {
-      receiverId: accountId,
       actions: [
         {
           type: "FunctionCall",
