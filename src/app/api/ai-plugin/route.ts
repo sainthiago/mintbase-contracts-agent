@@ -179,12 +179,12 @@ export async function GET() {
         post: {
           operationId: "add-minters",
           description:
-            "Add minters to a Mintbase contract. The connected wallet must be the current owner of the contract.",
+            "Add minters to a contract that the user owns. The connected wallet must be the current owner of the contract.",
           parameters: [
             {
               name: "contractId",
               in: "path",
-              description: "The identifier for the contract to add minters to.",
+              description: "The identifier for the contract to transfer.",
               required: true,
               schema: {
                 type: "string",
@@ -192,102 +192,19 @@ export async function GET() {
             },
             {
               name: "accounts",
-              in: "path",
-              description: "Array of account IDs to be added as minters.",
+              in: "query",
+              description:
+                "Comma-separated list of account IDs to be added as minters.",
               required: true,
               schema: {
-                type: "array",
-                items: {
-                  type: "string",
-                },
+                type: "string",
               },
             },
           ],
+
           responses: {
             "200": {
               description: "Minters added successfully",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      message: {
-                        type: "string",
-                        description: "Success message",
-                      },
-                    },
-                  },
-                },
-              },
-            },
-            "400": {
-              description: "Bad request",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      error: {
-                        type: "string",
-                        description: "The error message",
-                      },
-                    },
-                  },
-                },
-              },
-            },
-            "403": {
-              description: "Forbidden",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      error: {
-                        type: "string",
-                        description:
-                          "Error message indicating lack of permissions",
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      "/api/tools/remove-minters": {
-        post: {
-          operationId: "add-minters",
-          description:
-            "Remove minters of a Mintbase contract. The connected wallet must be the current owner of the contract.",
-          parameters: [
-            {
-              name: "contractId",
-              in: "path",
-              description:
-                "The identifier for the contract to remove minters from.",
-              required: true,
-              schema: {
-                type: "string",
-              },
-            },
-            {
-              name: "accounts",
-              in: "path",
-              description: "Array of account IDs to be removed as minters.",
-              required: true,
-              schema: {
-                type: "array",
-                items: {
-                  type: "string",
-                },
-              },
-            },
-          ],
-          responses: {
-            "200": {
-              description: "Minters removed successfully",
               content: {
                 "application/json": {
                   schema: {
