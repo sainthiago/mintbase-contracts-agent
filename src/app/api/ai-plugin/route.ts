@@ -37,7 +37,7 @@ export async function GET() {
       },
     },
     paths: {
-      "/api/{contractId}": {
+      "/api/tools/get-contract-info": {
         get: {
           operationId: "get-contract-info",
           description:
@@ -97,12 +97,21 @@ export async function GET() {
           },
         },
       },
-      "/api/transfer-ownership/{contractId}/{newOwner}": {
+      "/api/tools/transfer-contract-ownership": {
         post: {
           operationId: "transfer-contract-ownership",
           description:
             "Transfer the ownership of a contract to a new owner. The connected wallet must be the current owner of the contract.",
           parameters: [
+            {
+              name: "accountId",
+              in: "path",
+              description: "ID of the account that is connected.",
+              required: true,
+              schema: {
+                type: "string",
+              },
+            },
             {
               name: "contractId",
               in: "path",
