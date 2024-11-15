@@ -18,9 +18,6 @@ export default function Home() {
           <Link href="/.well-known/ai-plugin.json">OpenAPI Spec</Link>
         </li>
         <li>
-          <Link href="/api/swagger">Swagger</Link>
-        </li>
-        <li>
           <a
             href="https://github.com/sainthiago/mintbase-contracts-agent"
             target="_blank"
