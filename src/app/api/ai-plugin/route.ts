@@ -37,7 +37,7 @@ export async function GET() {
       },
     },
     paths: {
-      "/api/{token}": {
+      "/api/{contractId}": {
         get: {
           operationId: "get-contract-info",
           description:
@@ -61,22 +61,20 @@ export async function GET() {
                   schema: {
                     type: "object",
                     properties: {
-                      id: {
+                      name: {
                         type: "string",
                       },
                       owner: {
                         type: "string",
                       },
-                      symbol: {
-                        type: "string",
-                      },
-                      decimals: {
-                        type: "number",
-                      },
-                      icon: {
-                        type: "string",
+                      minters: {
+                        type: "array", // Changed from "string[]" to "array"
+                        items: {
+                          type: "string", // Added items definition
+                        },
                       },
                     },
+                    required: ["name", "owner", "minters"], // Ensure required properties are defined
                   },
                 },
               },
@@ -99,34 +97,25 @@ export async function GET() {
           },
         },
       },
-      "/api/swap/{tokenIn}/{tokenOut}/{quantity}": {
-        get: {
-          operationId: "get-swap-transactions",
+      "/api/transfer-ownership/{contractId}/{newOwner}": {
+        post: {
+          operationId: "transfer-contract-ownership",
           description:
-            "Get a transaction payload for swapping between two tokens using the best trading route on Ref.Finance. Token identifiers can be the name, symbol, or contractId and will be fuzzy matched automatically.",
+            "Transfer the ownership of a contract to a new owner. The connected wallet must be the current owner of the contract.",
           parameters: [
             {
-              name: "tokenIn",
+              name: "contractId",
               in: "path",
-              description: "The identifier for the input token.",
+              description: "The identifier for the contract to transfer.",
               required: true,
               schema: {
                 type: "string",
               },
             },
             {
-              name: "tokenOut",
+              name: "newOwner",
               in: "path",
-              description: "The identifier for the output token.",
-              required: true,
-              schema: {
-                type: "string",
-              },
-            },
-            {
-              name: "quantity",
-              in: "path",
-              description: "The amount of tokens to swap (input amount).",
+              description: "The account ID of the new owner.",
               required: true,
               schema: {
                 type: "string",
@@ -135,70 +124,16 @@ export async function GET() {
           ],
           responses: {
             "200": {
-              description: "Successful response",
+              description: "Ownership transferred successfully",
               content: {
                 "application/json": {
                   schema: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        signerId: {
-                          type: "string",
-                          description:
-                            "The account ID that will sign the transaction",
-                        },
-                        receiverId: {
-                          type: "string",
-                          description:
-                            "The account ID of the contract that will receive the transaction",
-                        },
-                        actions: {
-                          type: "array",
-                          items: {
-                            type: "object",
-                            properties: {
-                              type: {
-                                type: "string",
-                                description: "The type of action to perform",
-                              },
-                              params: {
-                                type: "object",
-                                properties: {
-                                  methodName: {
-                                    type: "string",
-                                    description:
-                                      "The name of the method to be called",
-                                  },
-                                  args: {
-                                    type: "object",
-                                    description:
-                                      "Arguments for the function call",
-                                  },
-                                  gas: {
-                                    type: "string",
-                                    description:
-                                      "Amount of gas to attach to the transaction",
-                                  },
-                                  deposit: {
-                                    type: "string",
-                                    description:
-                                      "Amount to deposit with the transaction",
-                                  },
-                                },
-                                required: [
-                                  "methodName",
-                                  "args",
-                                  "gas",
-                                  "deposit",
-                                ],
-                              },
-                            },
-                            required: ["type", "params"],
-                          },
-                        },
+                    type: "object",
+                    properties: {
+                      message: {
+                        type: "string",
+                        description: "Success message",
                       },
-                      required: ["signerId", "receiverId", "actions"],
                     },
                   },
                 },
@@ -214,6 +149,23 @@ export async function GET() {
                       error: {
                         type: "string",
                         description: "The error message",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "403": {
+              description: "Forbidden",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      error: {
+                        type: "string",
+                        description:
+                          "Error message indicating lack of permissions",
                       },
                     },
                   },

@@ -1,142 +1,90 @@
 import { swagger } from "@elysiajs/swagger";
-import {
-  WRAP_NEAR_CONTRACT_ID,
-  estimateSwap,
-  fetchAllPools,
-  ftGetTokenMetadata,
-  getStablePools,
-  instantSwap,
-  nearDepositTransaction,
-  nearWithdrawTransaction,
-  transformTransactions,
-  type EstimateSwapView,
-  type Transaction,
-  type TransformedTransaction,
-} from "@ref-finance/ref-sdk";
+
 import { Elysia } from "elysia";
 
-import { searchToken } from "@/utils/search-token";
+import { contractMinters, storeData } from "@mintbase-js/data";
+import { GAS, ONE_YOCTO } from "@mintbase-js/sdk";
 
 const app = new Elysia({ prefix: "/api", aot: false })
   .use(swagger())
-  .get("/:token", async ({ params: { token } }) => {
-    const tokenMatch = searchToken(token)[0];
-    if (!tokenMatch) {
+  .get("/:contractId", async ({ params: { contractId } }) => {
+    const { data: contractData, error: contractError } = await storeData(
+      contractId
+    );
+
+    console.log({ contractId, contractData });
+
+    const contractExists = contractData?.nft_contracts.length === 0;
+    if (!contractExists || contractError) {
       return {
-        error: `Token ${token} not found`,
+        error: `Contract ${contractId} was not found.`,
       };
     }
-    const tokenMetadata = await ftGetTokenMetadata(tokenMatch.id);
-    if (!tokenMetadata) {
+
+    const { data: mintersData, error: mintersError } = await contractMinters(
+      contractId
+    );
+
+    if (!mintersData || mintersError) {
       return {
-        error: `Metadata for token ${token} not found`,
+        error: `Minters for contract ${contractId} were not found`,
       };
     }
 
     return {
-      ...tokenMetadata,
-      icon: "",
+      name: contractData.nft_contracts[0].name,
+      owner: contractData.nft_contracts[0].owner_id,
+      minters: mintersData,
     };
   })
   .get(
-    "/swap/:tokenIn/:tokenOut/:quantity",
+    "/transfer-ownership/:contractId/:newOwner",
     async ({
-      params: { tokenIn, tokenOut, quantity },
+      params: { contractId, newOwner },
       headers,
-    }): Promise<TransformedTransaction[] | { error: string }> => {
+    }): Promise<any | { error: string }> => {
       const mbMetadata: { accountId: string } | undefined =
         headers["mb-metadata"] && JSON.parse(headers["mb-metadata"]);
       const accountId = mbMetadata?.accountId || "near";
 
-      const { ratedPools, unRatedPools, simplePools } = await fetchAllPools();
+      const { data: contractData, error: contractError } = await storeData(
+        contractId
+      );
 
-      const stablePools = unRatedPools.concat(ratedPools);
-
-      const stablePoolsDetail = await getStablePools(stablePools);
-
-      const isNearIn = tokenIn.toLowerCase() === "near";
-      const isNearOut = tokenOut.toLowerCase() === "near";
-
-      const tokenInMatch = searchToken(tokenIn)[0];
-      const tokenOutMatch = searchToken(tokenOut)[0];
-
-      if (!tokenInMatch || !tokenOutMatch) {
+      const contractExists = contractData?.nft_contracts.length === 0;
+      if (!contractExists || contractError) {
         return {
-          error: `Unable to find token(s) tokenInMatch: ${tokenInMatch?.name} tokenOutMatch: ${tokenOutMatch?.name}`,
+          error: `Contract ${contractId} was not found.`,
         };
       }
 
-      const [tokenInData, tokenOutData] = await Promise.all([
-        ftGetTokenMetadata(tokenInMatch.id),
-        ftGetTokenMetadata(tokenOutMatch.id),
-      ]);
-
-      if (tokenInData.id === WRAP_NEAR_CONTRACT_ID && isNearOut) {
-        return transformTransactions(
-          [nearWithdrawTransaction(quantity)],
-          accountId
-        );
+      if (contractData.nft_contracts[0].owner_id !== accountId) {
+        return {
+          error: `${accountId} is not the owner of the contract.`,
+        };
       }
 
-      if (isNearIn && tokenOutData.id === WRAP_NEAR_CONTRACT_ID) {
-        return transformTransactions(
-          [nearDepositTransaction(quantity)],
-          accountId
-        );
-      }
-
-      if (tokenInData.id === tokenOutData.id && isNearIn === isNearOut) {
-        return { error: "TokenIn and TokenOut cannot be the same" };
-      }
-
-      const refEstimateSwap = (enableSmartRouting: boolean) => {
-        return estimateSwap({
-          tokenIn: tokenInData,
-          tokenOut: tokenOutData,
-          amountIn: quantity,
-          simplePools,
-          options: {
-            enableSmartRouting,
-            stablePools,
-            stablePoolsDetail,
+      const transactionPayload = {
+        receiverId: accountId,
+        signerId: accountId,
+        actions: [
+          {
+            type: "FunctionCall",
+            params: {
+              methodName: "transfer_store_ownership",
+              contractAddress: contractId,
+              args: {
+                new_owner: newOwner,
+                keep_old_minters: true,
+              },
+              gas: GAS,
+              deposit: ONE_YOCTO,
+            },
           },
-        });
+        ],
       };
-      const swapTodos: EstimateSwapView[] = await refEstimateSwap(true).catch(
-        () => {
-          return refEstimateSwap(false); // fallback to non-smart routing if unsupported
-        }
-      );
 
-      const transactionsRef: Transaction[] = await instantSwap({
-        tokenIn: tokenInData,
-        tokenOut: tokenOutData,
-        amountIn: quantity,
-        swapTodos,
-        slippageTolerance: 0.05,
-        AccountId: accountId,
-        referralId: "mintbase.near",
-      });
-
-      if (isNearIn) {
-        // wrap near
-        transactionsRef.splice(-1, 0, nearDepositTransaction(quantity));
-      }
-
-      if (isNearOut) {
-        // unwrap near
-        const lastFunctionCall = transactionsRef[transactionsRef.length - 1]
-          .functionCalls[0] as {
-            args: {
-              msg: string;
-            };
-          };
-        const parsedActions = JSON.parse(lastFunctionCall.args.msg);
-        parsedActions['skip_unwrap_near'] = false;
-        lastFunctionCall.args.msg = JSON.stringify(parsedActions);
-      }
-
-      return transformTransactions(transactionsRef, accountId);
+      return transactionPayload;
     }
   )
   .compile();
