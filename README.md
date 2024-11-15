@@ -6,6 +6,3 @@ Mintbase Contracts Agent facilitates the management of Mintbase contracts. If yo
 
 - Manage Minters: Add/Remove minters.
 - Transfer Store Ownership.
-- Deploy a new store.
-
-
