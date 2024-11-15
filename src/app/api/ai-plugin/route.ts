@@ -15,9 +15,9 @@ export async function GET() {
   const pluginData = {
     openapi: "3.0.0",
     info: {
-      title: "Ref Finance API",
+      title: "Mintbase Contracts API",
       description:
-        "API for retrieving token metadata and swapping tokens through Ref Finance.",
+        "API for managing Mintbase contracts, add/remove minters, transfer ownership.",
       version: "1.0.0",
     },
     servers: [
@@ -28,25 +28,25 @@ export async function GET() {
     "x-mb": {
       "account-id": key.accountId || "",
       assistant: {
-        name: "Ref Finance Agent",
+        name: "Mintbase Contracts Agent",
         description:
-          "An assistant that provides token metadata and swaps tokens through Ref Finance.",
+          "An assistant that allows users to manage the Mintbase contracts they own - add/remove minters and transfer contract ownership.",
         instructions:
-          "Get information for a given fungible token or swaps one token for another. Do not modify token identifiers, they will be fuzzy matched automatically.",
+          "Get information for a Mintbase contract or add/remove minters from that contract or transfer ownership of the contract to other wallet. Only possible if the connected wallet is the owner of the contract.",
         tools: [{ type: "generate-transaction" }],
       },
     },
     paths: {
       "/api/{token}": {
         get: {
-          operationId: "get-token-metadata",
+          operationId: "get-contract-info",
           description:
-            "Get token metadata from Ref Finance. Token identifiers can be the name, symbol, or contractId and will be fuzzy matched automatically.",
+            "Get contract info from Mintbase indexer. Info can be name, owner and minters.",
           parameters: [
             {
-              name: "token",
+              name: "contract",
               in: "path",
-              description: "The identifier for the token to get metadata for.",
+              description: "The identifier for the contract to get info for.",
               required: true,
               schema: {
                 type: "string",
@@ -64,7 +64,7 @@ export async function GET() {
                       id: {
                         type: "string",
                       },
-                      name: {
+                      owner: {
                         type: "string",
                       },
                       symbol: {
