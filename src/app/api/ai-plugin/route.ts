@@ -7,7 +7,7 @@ if (!key?.accountId) {
   console.warn("Missing account info.");
 }
 
-const url = bitteConfig.url || "mintbase-contracts-agent.vercel.app";
+const url = bitteConfig.url || "https://mintbase-contracts-agent.vercel.app";
 
 export async function GET() {
   const pluginData = {
