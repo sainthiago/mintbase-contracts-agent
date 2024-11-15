@@ -184,7 +184,7 @@ export async function GET() {
             {
               name: "contractId",
               in: "path",
-              description: "The identifier for the contract to transfer.",
+              description: "The identifier for the contract to add minters.",
               required: true,
               schema: {
                 type: "string",
@@ -255,6 +255,87 @@ export async function GET() {
           },
         },
       },
+      "/api/tools/remove-minters": {
+        post: {
+          operationId: "remove-minters",
+          description:
+            "Remove minters from a contract that the user owns. The connected wallet must be the current owner of the contract.",
+          parameters: [
+            {
+              name: "contractId",
+              in: "path",
+              description: "The identifier for the contract to remove minters.",
+              required: true,
+              schema: {
+                type: "string",
+              },
+            },
+            {
+              name: "accounts",
+              in: "query",
+              description:
+                "Comma-separated list of account IDs to be removed as minters.",
+              required: true,
+              schema: {
+                type: "string",
+              },
+            },
+          ],
+
+          responses: {
+            "200": {
+              description: "Minters removed successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      message: {
+                        type: "string",
+                        description: "Success message",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "400": {
+              description: "Bad request",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      error: {
+                        type: "string",
+                        description: "The error message",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "403": {
+              description: "Forbidden",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      error: {
+                        type: "string",
+                        description:
+                          "Error message indicating lack of permissions",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      
     },
   };
   return NextResponse.json(pluginData);

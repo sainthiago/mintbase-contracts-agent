@@ -12,6 +12,7 @@ export async function POST(request: Request) {
     const { searchParams } = new URL(request.url);
 
     const contractId = searchParams.get("contractId");
+
     const accounts = searchParams.get("accounts");
 
     if (!contractId || !accounts?.length || !accountId) {
@@ -22,6 +23,8 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    const accountsArray = accounts.split(",").map((account) => account.trim());
 
     const { data: contractData, error: contractError } = await storeData(
       contractId
@@ -57,7 +60,7 @@ export async function POST(request: Request) {
             methodName: "batch_change_minters",
             contractAddress: contractId,
             args: {
-              revoke: accounts,
+              revoke: accountsArray,
             },
             gas: GAS,
             deposit: ONE_YOCTO,
