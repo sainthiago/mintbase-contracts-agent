@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import { DEPLOYMENT_URL } from "vercel-url";
 
 const key = JSON.parse(process.env.BITTE_KEY || "{}");
-const config = JSON.parse(process.env.BITTE_CONFIG || "{}");
+const bitteConfig = JSON.parse(process.env.BITTE_CONFIG || "{}");
 
 if (!key?.accountId) {
   console.warn("Missing account info.");
 }
-if (!config || !config.url) {
-  console.warn("Missing config or url in config.");
-}
+
+const url = bitteConfig.url || "mintbase-contracts-agent.vercel.app";
 
 export async function GET() {
   const pluginData = {
@@ -22,7 +20,7 @@ export async function GET() {
     },
     servers: [
       {
-        url: config?.url || DEPLOYMENT_URL,
+        url,
       },
     ],
     "x-mb": {
@@ -34,6 +32,7 @@ export async function GET() {
         instructions:
           "Get information for a Mintbase contract or add/remove minters from that contract or transfer ownership of the contract to other wallet. Only possible if the connected wallet is the owner of the contract.",
         tools: [{ type: "generate-transaction" }],
+        image: `${url}/mintbase.svg`,
       },
     },
     paths: {
