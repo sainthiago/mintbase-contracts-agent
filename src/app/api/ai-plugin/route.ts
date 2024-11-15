@@ -44,7 +44,7 @@ export async function GET() {
             "Get contract info from Mintbase indexer. Info can be name, owner and minters.",
           parameters: [
             {
-              name: "contract",
+              name: "contractId",
               in: "path",
               description: "The identifier for the contract to get info for.",
               required: true,
@@ -68,13 +68,13 @@ export async function GET() {
                         type: "string",
                       },
                       minters: {
-                        type: "array", // Changed from "string[]" to "array"
+                        type: "array",
                         items: {
-                          type: "string", // Added items definition
+                          type: "string", 
                         },
                       },
                     },
-                    required: ["name", "owner", "minters"], // Ensure required properties are defined
+                    required: ["name", "owner", "minters"],
                   },
                 },
               },
